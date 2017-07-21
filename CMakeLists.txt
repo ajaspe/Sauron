@@ -14,6 +14,9 @@ include_directories( ${PROJECT_SOURCE_DIR}/src )
 
 add_executable( eye WIN32
 	src/eye/main.cpp
+	src/eye/activity_sampler.cpp
+	src/eye/activity_sampler.h
+	src/eye/timestamp.h
 	src/eye/resource.h
 	src/eye/eye.rc
 )

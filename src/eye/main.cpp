@@ -1,10 +1,11 @@
 #include <windows.h>
 #include <Psapi.h>
 #include <stdio.h>
-
-// TODO: Set an icon
+#include <regex>
 
 #include "resource.h"
+
+#include "activity_sampler.h"
 
 #define ID_TRAY_APP_ICON    1001
 #define ID_TRAY_EXIT        1002
@@ -16,6 +17,7 @@ const LPSTR tip = "Este es el tip";
 HWND hMain, hEdit;
 HMENU hMenuRightClick;
 NOTIFYICONDATA notifyIconData;
+ActivitySampler activitySampler;
 
 void appendText(HWND hEditWnd, LPCTSTR Text)
 {
@@ -32,6 +34,16 @@ void log() {
 	// Get active window title
 	CHAR wnd_title[1024];
 	GetWindowText(hActiveWindow, wnd_title, sizeof(wnd_title));
+
+	std::string result;
+	std::cmatch match;
+	std::regex re("^(.+) - Microsoft Visual Studio");
+	if (std::regex_search(wnd_title, match, re) && match.size() > 1) {
+		result = match.str(1);
+	}
+	else {
+		result = std::string("NO ENCONTRADO");
+	}
 
 	// Get active window process
 	DWORD pid;
@@ -51,15 +63,16 @@ void log() {
 	// Get Local Time for timestamp
 	SYSTEMTIME st;
 	GetLocalTime(&st);
+
 	
 	CHAR mess[256];
 	if(idleSeconds < 10.0)
 		sprintf(mess, "%i/%i/%i %i:%i:%i.%i\t%s\t%s\t%.2f\n",
 			st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-			processFileName, wnd_title, idleSeconds);
+			processFileName, result.c_str(), idleSeconds);
 	else 
 		sprintf(mess, "--- IDLE --- (for %.1f seconds)\n", idleSeconds);
-	appendText(hEdit, mess);
+	
 }
 
 
@@ -149,7 +162,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 
 	case WM_TIMER:
-		log();
+		activitySampler.takeSample();
+		appendText(hEdit, activitySampler.getLastSampleString().c_str());
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
