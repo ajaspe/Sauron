@@ -16,10 +16,12 @@ public:
 	};
 
 	void takeSample();
+	void pushToFile();
 	std::string getLastSampleString();
 
 private:
 	std::vector<Sample> _samples;
+	std::string _filenameDay;
 
 	
 
